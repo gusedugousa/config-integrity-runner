@@ -1,0 +1,149 @@
+name: Configuration Integrity Check
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Daily drift scan at 06:00 UTC
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+    inputs:
+      desired_state:
+        description: 'Path to desired-state JSON (relative to repo root)'
+        required: false
+        default: 'data/desired-state.json'
+      actual_state:
+        description: 'Path to actual-state JSON (relative to repo root)'
+        required: false
+        default: 'data/actual-state.json'
+
+jobs:
+  # ────────────────────────────────────────────────────────────────────────
+  pester-tests:
+    name: Pester Unit Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Pester
+        shell: pwsh
+        run: |
+          Install-Module -Name Pester -MinimumVersion 5.5.0 -Force -Scope CurrentUser
+          Import-Module Pester -MinimumVersion 5.5.0
+
+      - name: Run Pester tests
+        shell: pwsh
+        run: |
+          $config = New-PesterConfiguration
+          $config.Run.Path             = './tests'
+          $config.Output.Verbosity     = 'Detailed'
+          $config.TestResult.Enabled   = $true
+          $config.TestResult.OutputPath   = 'test-results.xml'
+          $config.TestResult.OutputFormat = 'NUnitXml'
+
+          $result = Invoke-Pester -Configuration $config
+
+          if ($result.FailedCount -gt 0) {
+            Write-Error "Pester: $($result.FailedCount) test(s) failed."
+            exit 1
+          }
+
+          Write-Host "All $($result.PassedCount) tests passed."
+
+      - name: Publish test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pester-results
+          path: test-results.xml
+
+  # ────────────────────────────────────────────────────────────────────────
+  integrity-check:
+    name: Configuration Integrity Check
+    runs-on: ubuntu-latest
+    needs: pester-tests
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Resolve input paths
+        id: paths
+        shell: pwsh
+        run: |
+          $desired = '${{ github.event.inputs.desired_state }}' `
+                     -replace '^$', 'data/desired-state.json'
+          $actual  = '${{ github.event.inputs.actual_state }}' `
+                     -replace '^$', 'data/actual-state.json'
+
+          "desired=$desired" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "actual=$actual"   | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+      - name: Run integrity check
+        id: check
+        shell: pwsh
+        run: |
+          Import-Module ./src/ConfigIntegrity.psm1 -Force
+          New-Item -ItemType Directory -Path ./output -Force | Out-Null
+
+          $report = Invoke-ConfigIntegrityCheck `
+              -DesiredStatePath './${{ steps.paths.outputs.desired }}' `
+              -ActualStatePath  './${{ steps.paths.outputs.actual  }}' `
+              -OutputPath       './output/integrity-report.json'
+
+          # Expose summary to downstream steps and job summary
+          $s = $report.Summary
+          "score=$($s.IntegrityScore)"   | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "status=$($s.Status)"          | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "compliant=$($s.Compliant)"    | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "drifted=$($s.Drifted)"        | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "missing=$($s.Missing)"        | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+      - name: Write job summary
+        if: always()
+        shell: pwsh
+        run: |
+          $score    = '${{ steps.check.outputs.score }}'
+          $status   = '${{ steps.check.outputs.status }}'
+          $comply   = '${{ steps.check.outputs.compliant }}'
+          $drifted  = '${{ steps.check.outputs.drifted }}'
+          $missing  = '${{ steps.check.outputs.missing }}'
+
+          $badge = switch ($status) {
+            'PASS'    { '![PASS](https://img.shields.io/badge/integrity-PASS-brightgreen)' }
+            'WARNING' { '![WARN](https://img.shields.io/badge/integrity-WARNING-yellow)'  }
+            default   { '![FAIL](https://img.shields.io/badge/integrity-FAIL-red)'        }
+          }
+
+          @"
+          ## Configuration Integrity Report $badge
+
+          | Metric | Value |
+          |--------|-------|
+          | Integrity Score | **${score}%** |
+          | Status | **$status** |
+          | Compliant | $comply |
+          | Drifted | $drifted |
+          | Missing | $missing |
+
+          > Full JSON report available in the **integrity-report** artifact.
+          "@ | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8
+
+      - name: Upload integrity report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: integrity-report
+          path: output/integrity-report.json
+          retention-days: 30
+
+      - name: Fail pipeline if integrity is FAIL
+        if: steps.check.outputs.status == 'FAIL'
+        shell: pwsh
+        run: |
+          Write-Error "Integrity score ${{ steps.check.outputs.score }}% is below the 70% threshold. Review the integrity-report artifact."
+          exit 1

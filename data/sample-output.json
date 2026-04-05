@@ -1,0 +1,98 @@
+{
+  "_note": "Static sample showing expected output from the included desired/actual state files.",
+  "RunId": "2026-04-05T06:00:00.0000000+00:00",
+  "Summary": {
+    "TotalResources": 5,
+    "Compliant": 2,
+    "Drifted": 2,
+    "Missing": 1,
+    "IntegrityScore": 67.5,
+    "Status": "FAIL"
+  },
+  "Resources": [
+    {
+      "Name": "vm-prod-web-01",
+      "ResourceGroup": "rg-production",
+      "Status": "COMPLIANT",
+      "Score": 100.0,
+      "DriftItems": [],
+      "TotalChecks": 8,
+      "PassedChecks": 8
+    },
+    {
+      "Name": "vm-prod-web-02",
+      "ResourceGroup": "rg-production",
+      "Status": "DRIFTED",
+      "Score": 50.0,
+      "DriftItems": [
+        {
+          "Property": "vmSize",
+          "Expected": "Standard_D2s_v3",
+          "Actual": "Standard_D4s_v3",
+          "Severity": "High"
+        },
+        {
+          "Property": "osDiskType",
+          "Expected": "Premium_LRS",
+          "Actual": "Standard_LRS",
+          "Severity": "Medium"
+        },
+        {
+          "Property": "diagnosticsEnabled",
+          "Expected": "True",
+          "Actual": "False",
+          "Severity": "Medium"
+        },
+        {
+          "Property": "tag:CostCenter",
+          "Expected": "CC-1001",
+          "Actual": "(missing)",
+          "Severity": "Medium"
+        }
+      ],
+      "TotalChecks": 8,
+      "PassedChecks": 4
+    },
+    {
+      "Name": "vm-prod-db-01",
+      "ResourceGroup": "rg-production",
+      "Status": "DRIFTED",
+      "Score": 87.5,
+      "DriftItems": [
+        {
+          "Property": "location",
+          "Expected": "eastus",
+          "Actual": "westus",
+          "Severity": "High"
+        }
+      ],
+      "TotalChecks": 8,
+      "PassedChecks": 7
+    },
+    {
+      "Name": "vm-dev-app-01",
+      "ResourceGroup": "rg-development",
+      "Status": "COMPLIANT",
+      "Score": 100.0,
+      "DriftItems": [],
+      "TotalChecks": 8,
+      "PassedChecks": 8
+    },
+    {
+      "Name": "vm-prod-app-01",
+      "ResourceGroup": "rg-production",
+      "Status": "MISSING",
+      "Score": 0,
+      "DriftItems": [
+        {
+          "Property": "resource",
+          "Expected": "present",
+          "Actual": "not found in environment",
+          "Severity": "Critical"
+        }
+      ],
+      "TotalChecks": 8,
+      "PassedChecks": 0
+    }
+  ]
+}

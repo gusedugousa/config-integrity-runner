@@ -1,0 +1,74 @@
+{
+  "resources": [
+    {
+      "name": "vm-prod-web-01",
+      "resourceGroup": "rg-production",
+      "vmSize": "Standard_D2s_v3",
+      "location": "eastus",
+      "osType": "Windows",
+      "osDiskType": "Premium_LRS",
+      "diagnosticsEnabled": true,
+      "tags": {
+        "Environment": "Production",
+        "Owner": "platform-team",
+        "CostCenter": "CC-1001"
+      }
+    },
+    {
+      "name": "vm-prod-web-02",
+      "resourceGroup": "rg-production",
+      "vmSize": "Standard_D2s_v3",
+      "location": "eastus",
+      "osType": "Windows",
+      "osDiskType": "Premium_LRS",
+      "diagnosticsEnabled": true,
+      "tags": {
+        "Environment": "Production",
+        "Owner": "platform-team",
+        "CostCenter": "CC-1001"
+      }
+    },
+    {
+      "name": "vm-prod-db-01",
+      "resourceGroup": "rg-production",
+      "vmSize": "Standard_E4s_v3",
+      "location": "eastus",
+      "osType": "Linux",
+      "osDiskType": "Premium_LRS",
+      "diagnosticsEnabled": true,
+      "tags": {
+        "Environment": "Production",
+        "Owner": "data-team",
+        "CostCenter": "CC-2002"
+      }
+    },
+    {
+      "name": "vm-dev-app-01",
+      "resourceGroup": "rg-development",
+      "vmSize": "Standard_B2s",
+      "location": "eastus",
+      "osType": "Linux",
+      "osDiskType": "Standard_LRS",
+      "diagnosticsEnabled": false,
+      "tags": {
+        "Environment": "Development",
+        "Owner": "dev-team",
+        "CostCenter": "CC-3003"
+      }
+    },
+    {
+      "name": "vm-prod-app-01",
+      "resourceGroup": "rg-production",
+      "vmSize": "Standard_D4s_v3",
+      "location": "eastus",
+      "osType": "Windows",
+      "osDiskType": "Premium_LRS",
+      "diagnosticsEnabled": true,
+      "tags": {
+        "Environment": "Production",
+        "Owner": "app-team",
+        "CostCenter": "CC-1001"
+      }
+    }
+  ]
+}

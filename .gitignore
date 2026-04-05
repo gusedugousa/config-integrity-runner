@@ -1,0 +1,4 @@
+output/
+*.json.bak
+test-results.xml
+.DS_Store
