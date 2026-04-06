@@ -1,5 +1,5 @@
 {
-  "_note": "Simulates output from Get-AzVM / az vm list. vm-prod-app-01 absent. vm-prod-web-01 has diagnostics disabled + missing tag. vm-dev-app-01 deployed to wrong region.",
+  "_note": "Post-remediation snapshot. All VMs brought into compliance with desired state.",
   "resources": [
     {
       "name": "vm-prod-web-01",
@@ -8,30 +8,32 @@
       "location": "eastus",
       "osType": "Windows",
       "osDiskType": "Premium_LRS",
-      "diagnosticsEnabled": false,
+      "diagnosticsEnabled": true,
       "tags": {
         "Environment": "Production",
+        "Owner": "platform-team",
         "CostCenter": "CC-1001"
       }
     },
     {
       "name": "vm-prod-web-02",
       "resourceGroup": "rg-production",
-      "vmSize": "Standard_D4s_v3",
+      "vmSize": "Standard_D2s_v3",
       "location": "eastus",
       "osType": "Windows",
-      "osDiskType": "Standard_LRS",
-      "diagnosticsEnabled": false,
+      "osDiskType": "Premium_LRS",
+      "diagnosticsEnabled": true,
       "tags": {
         "Environment": "Production",
-        "Owner": "platform-team"
+        "Owner": "platform-team",
+        "CostCenter": "CC-1001"
       }
     },
     {
       "name": "vm-prod-db-01",
       "resourceGroup": "rg-production",
       "vmSize": "Standard_E4s_v3",
-      "location": "westus",
+      "location": "eastus",
       "osType": "Linux",
       "osDiskType": "Premium_LRS",
       "diagnosticsEnabled": true,
@@ -45,7 +47,7 @@
       "name": "vm-dev-app-01",
       "resourceGroup": "rg-development",
       "vmSize": "Standard_B2s",
-      "location": "westus",
+      "location": "eastus",
       "osType": "Linux",
       "osDiskType": "Standard_LRS",
       "diagnosticsEnabled": false,
@@ -53,6 +55,20 @@
         "Environment": "Development",
         "Owner": "dev-team",
         "CostCenter": "CC-3003"
+      }
+    },
+    {
+      "name": "vm-prod-app-01",
+      "resourceGroup": "rg-production",
+      "vmSize": "Standard_D4s_v3",
+      "location": "eastus",
+      "osType": "Windows",
+      "osDiskType": "Premium_LRS",
+      "diagnosticsEnabled": true,
+      "tags": {
+        "Environment": "Production",
+        "Owner": "app-team",
+        "CostCenter": "CC-1001"
       }
     }
   ]
